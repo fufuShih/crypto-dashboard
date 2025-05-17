@@ -26,7 +26,19 @@ const Chart: React.FC<ChartProps> = ({
     if (!data.length) return;
 
     g.clear();
-    g.setStrokeStyle({ width: 1, color: 0x000000 });
+    // 畫背景
+    g.beginFill(0x232326);
+    g.drawRect(0, 0, width, height);
+    g.endFill();
+
+    // 畫網格線
+    g.lineStyle(1, 0x444444, 0.7);
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = 40 + ((height - 80) / gridLines) * i;
+      g.moveTo(40, y);
+      g.lineTo(width - 40, y);
+    }
 
     // Calculate scales
     const padding = 40;
@@ -37,33 +49,52 @@ const Chart: React.FC<ChartProps> = ({
     const maxPrice = Math.max(...data.map(d => d.high));
     const priceRange = maxPrice - minPrice;
 
-    const candleWidth = chartWidth / data.length;
+    // 蠟燭圖間距
+    const candleGap = 2;
+    const candleWidth = (chartWidth / data.length) - candleGap;
     const priceScale = chartHeight / priceRange;
 
-    // Draw price scale
-    g.setStrokeStyle({ width: 1, color: 0xcccccc });
+    // Draw price scale (Y 軸)
+    g.lineStyle(1, 0xcccccc);
     g.moveTo(padding, padding);
     g.lineTo(padding, height - padding);
     g.lineTo(width - padding, height - padding);
 
+    // 畫價格標籤
+    g.lineStyle(0);
+    g.beginFill(0x232326);
+    for (let i = 0; i <= gridLines; i++) {
+      const price = maxPrice - (priceRange / gridLines) * i;
+      const y = padding + (chartHeight / gridLines) * i;
+      g.drawRect(0, y - 10, padding, 20);
+      g.endFill();
+      g.lineStyle(0);
+      g.beginFill(0x232326);
+      g.endFill();
+      g.lineStyle(0);
+      // 這裡可用 PIXI.Text 實現文字，暫略
+    }
+
     // Draw candlesticks
     data.forEach((candle, index) => {
-      const x = padding + index * candleWidth;
+      const x = padding + index * (candleWidth + candleGap);
       const y = height - padding - (candle.close - minPrice) * priceScale;
-      
+      const isBull = candle.close >= candle.open;
+      const color = isBull ? 0x4caf50 : 0xf44336; // 柔和綠/紅
+
       // Draw candle body
-      g.lineStyle(1, candle.close >= candle.open ? 0x00ff00 : 0xff0000);
-      g.beginFill(candle.close >= candle.open ? 0x00ff00 : 0xff0000);
+      g.lineStyle(1, color);
+      g.beginFill(color, 0.9);
       g.drawRect(
-        x + candleWidth * 0.1,
+        x,
         height - padding - (Math.max(candle.open, candle.close) - minPrice) * priceScale,
-        candleWidth * 0.8,
-        Math.abs(candle.close - candle.open) * priceScale
+        candleWidth,
+        Math.max(2, Math.abs(candle.close - candle.open) * priceScale)
       );
       g.endFill();
 
       // Draw wicks
-      g.lineStyle(1, candle.close >= candle.open ? 0x00ff00 : 0xff0000);
+      g.lineStyle(1, color);
       g.moveTo(x + candleWidth * 0.5, height - padding - (candle.high - minPrice) * priceScale);
       g.lineTo(x + candleWidth * 0.5, height - padding - (candle.low - minPrice) * priceScale);
     });
