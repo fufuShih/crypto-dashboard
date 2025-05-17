@@ -1,8 +1,8 @@
 import '@pixi/layout/react';
 import '@pixi/layout';
-import { LayoutContainer, Sprite } from '@pixi/layout/components';
-import React, { useRef } from 'react';
-import { Container } from 'pixi.js';
+import { LayoutContainer } from '@pixi/layout/components';
+import React, { useRef, useEffect } from 'react';
+import { Container, Sprite } from 'pixi.js';
 import { extend, useApplication, Application } from '@pixi/react';
 import { BunnySprite } from './components/Bunny';
 
@@ -16,14 +16,27 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     const layoutRef = useRef<Container>(null);
     const { app } = useApplication();
 
-    app.renderer.on('resize', () => {
-        if (layoutRef.current) {
-            layoutRef.current.layout = {
-                width: app.screen.width,
-                height: app.screen.height,
-            };
-        }
-    });
+    useEffect(() => {
+        if (!app?.renderer) return;
+
+        const handleResize = () => {
+            if (layoutRef.current) {
+                layoutRef.current.layout = {
+                    width: app.screen.width,
+                    height: app.screen.height,
+                };
+            }
+        };
+
+        app.renderer.on("resize", handleResize);
+        
+        // Initial layout
+        handleResize();
+
+        return () => {
+            app.renderer.off("resize", handleResize);
+        };
+    }, [app]);
 
     return (
         <pixiContainer ref={layoutRef} layout={{}}>
