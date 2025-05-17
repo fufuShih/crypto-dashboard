@@ -26,7 +26,7 @@ const Chart: React.FC<ChartProps> = ({
     if (!data.length) return;
 
     g.clear();
-    g.lineStyle(1, 0x000000);
+    g.setStrokeStyle({ width: 1, color: 0x000000 });
 
     // Calculate scales
     const padding = 40;
@@ -41,7 +41,7 @@ const Chart: React.FC<ChartProps> = ({
     const priceScale = chartHeight / priceRange;
 
     // Draw price scale
-    g.lineStyle(1, 0xcccccc);
+    g.setStrokeStyle({ width: 1, color: 0xcccccc });
     g.moveTo(padding, padding);
     g.lineTo(padding, height - padding);
     g.lineTo(width - padding, height - padding);
