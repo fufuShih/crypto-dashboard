@@ -22,9 +22,9 @@ const Chart: React.FC<ChartProps> = ({
 }) => {
   const graphicsRef = useRef<PIXI.Graphics>(null);
 
-  // 新增：Y軸相關計算提升到組件作用域，供下方標籤渲染使用
+  // 增加左右padding空間
+  const padding = 60;
   const gridLines = 5;
-  const padding = 40;
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
   const minPrice = data.length ? Math.min(...data.map(d => d.low)) : 0;
@@ -42,16 +42,13 @@ const Chart: React.FC<ChartProps> = ({
 
     // Draw grid lines
     for (let i = 0; i <= gridLines; i++) {
-      const y = 40 + ((height - 80) / gridLines) * i;
-      g.moveTo(40, y)
-        .lineTo(width - 40, y)
+      const y = padding + ((height - padding * 2) / gridLines) * i;
+      g.moveTo(padding, y)
+        .lineTo(width - padding, y)
         .stroke({ width: 1, color: 0x444444, alpha: 0.7 });
     }
 
     // Calculate scales
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
-    
     const priceScale = chartHeight / priceRange;
 
     // Draw price scale (Y axis)
@@ -59,13 +56,6 @@ const Chart: React.FC<ChartProps> = ({
       .lineTo(padding, height - padding)
       .lineTo(width - padding, height - padding)
       .stroke({ width: 1, color: 0xcccccc });
-
-    // Draw price labels background
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding + (chartHeight / gridLines) * i;
-      g.rect(0, y - 10, padding, 20)
-        .fill(0x232326);
-    }
 
     // Draw candlesticks
     data.forEach((candle, index) => {
@@ -95,27 +85,6 @@ const Chart: React.FC<ChartProps> = ({
   return (
     <pixiContainer>
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
-      {/* Y軸價格標籤 */}
-      {
-        Array.from({ length: gridLines + 1 }).map((_, i) => {
-          const y = padding + (chartHeight / gridLines) * i;
-          const price = maxPrice - (priceRange / gridLines) * i;
-          return (
-            <pixiText
-              key={i}
-              text={price.toFixed(2)}
-              x={padding - 8}
-              y={y - 7}
-              style={{
-                fill: '#cccccc',
-                fontSize: 13,
-                fontFamily: 'monospace',
-                align: 'right',
-              }}
-            />
-          );
-        })
-      }
       
       {/* X軸時間標籤 - 修改為每隔N個數據點顯示一個 */}
       {
@@ -142,6 +111,28 @@ const Chart: React.FC<ChartProps> = ({
                 fontSize: 12,
                 fontFamily: 'monospace',
                 align: 'center',
+              }}
+            />
+          );
+        })
+      }
+
+      {/* Y軸價格標籤 - 放在最後確保最高z-index */}
+      {
+        Array.from({ length: gridLines + 1 }).map((_, i) => {
+          const y = padding + (chartHeight / gridLines) * i;
+          const price = maxPrice - (priceRange / gridLines) * i;
+          return (
+            <pixiText
+              key={i}
+              text={price.toFixed(2)}
+              x={padding - 45}
+              y={y - 7}
+              style={{
+                fill: '#cccccc',
+                fontSize: 13,
+                fontFamily: 'monospace',
+                align: 'right',
               }}
             />
           );
