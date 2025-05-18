@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import * as PIXI from 'pixi.js';
 
 interface PriceData {
@@ -22,6 +22,15 @@ const Chart: React.FC<ChartProps> = ({
 }) => {
   const graphicsRef = useRef<PIXI.Graphics>(null);
 
+  // 新增：Y軸相關計算提升到組件作用域，供下方標籤渲染使用
+  const gridLines = 5;
+  const padding = 40;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const minPrice = data.length ? Math.min(...data.map(d => d.low)) : 0;
+  const maxPrice = data.length ? Math.max(...data.map(d => d.high)) : 1;
+  const priceRange = maxPrice - minPrice || 1;
+
   const drawChart = (g: PIXI.Graphics) => {
     if (!data.length) return;
 
@@ -32,7 +41,6 @@ const Chart: React.FC<ChartProps> = ({
       .fill(0x232326);
 
     // Draw grid lines
-    const gridLines = 5;
     for (let i = 0; i <= gridLines; i++) {
       const y = 40 + ((height - 80) / gridLines) * i;
       g.moveTo(40, y)
@@ -41,17 +49,9 @@ const Chart: React.FC<ChartProps> = ({
     }
 
     // Calculate scales
-    const padding = 40;
     const chartWidth = width - padding * 2;
     const chartHeight = height - padding * 2;
     
-    const minPrice = Math.min(...data.map(d => d.low));
-    const maxPrice = Math.max(...data.map(d => d.high));
-    const priceRange = maxPrice - minPrice;
-
-    // Candle spacing
-    const candleGap = 2;
-    const candleWidth = (chartWidth / data.length) - candleGap;
     const priceScale = chartHeight / priceRange;
 
     // Draw price scale (Y axis)
@@ -69,7 +69,7 @@ const Chart: React.FC<ChartProps> = ({
 
     // Draw candlesticks
     data.forEach((candle, index) => {
-      const x = padding + index * (candleWidth + candleGap);
+      const x = padding + index * (chartWidth / data.length);
       const isBull = candle.close >= candle.open;
       const color = isBull ? 0x4caf50 : 0xf44336;
 
@@ -77,12 +77,12 @@ const Chart: React.FC<ChartProps> = ({
       const bodyHeight = Math.max(2, Math.abs(candle.close - candle.open) * priceScale);
       const bodyY = height - padding - (Math.max(candle.open, candle.close) - minPrice) * priceScale;
       
-      g.rect(x, bodyY, candleWidth, bodyHeight)
+      g.rect(x, bodyY, chartWidth / data.length, bodyHeight)
         .fill({ color, alpha: 0.9 })
         .stroke({ width: 1, color });
 
       // Draw wicks
-      const wickX = x + candleWidth * 0.5;
+      const wickX = x + (chartWidth / data.length) * 0.5;
       const highY = height - padding - (candle.high - minPrice) * priceScale;
       const lowY = height - padding - (candle.low - minPrice) * priceScale;
       
@@ -95,6 +95,25 @@ const Chart: React.FC<ChartProps> = ({
   return (
     <pixiContainer>
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
+      {/* Y軸價格標籤 */}
+      {Array.from({ length: gridLines + 1 }).map((_, i) => {
+        const y = padding + (chartHeight / gridLines) * i;
+        const price = maxPrice - (priceRange / gridLines) * i;
+        return (
+          <pixiText
+            key={i}
+            text={price.toFixed(2)}
+            x={8}
+            y={y - 10}
+            style={{
+              fill: '#cccccc',
+              fontSize: 14,
+              fontFamily: 'monospace',
+              align: 'right',
+            }}
+          />
+        );
+      })}
     </pixiContainer>
   );
 };

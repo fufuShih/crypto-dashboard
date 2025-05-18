@@ -2,9 +2,8 @@ import '@pixi/layout/react';
 import '@pixi/layout';
 import { LayoutContainer } from '@pixi/layout/components';
 import React, { useRef, useEffect } from 'react';
-import { Container, Graphics, Sprite, State } from 'pixi.js';
+import { Container, Graphics, HTMLText, Sprite, State } from 'pixi.js';
 import { extend, useApplication, Application } from '@pixi/react';
-import { BunnySprite } from '../components/Bunny';
 import Chart from '../components/Chart';
 
 extend({
@@ -12,7 +11,9 @@ extend({
     LayoutContainer,
     Sprite,
     State,
-    Graphics
+    Graphics,
+    Text,
+    HTMLText
 });
 
 const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,7 +62,6 @@ export function HomePage() {
                       height: '100%' 
                     }}
                 >
-                  {/* <BunnySprite /> */}
                   <Chart data={[
                     { timestamp: 1, open: 100, high: 105, low: 98, close: 103 },
                     { timestamp: 2, open: 103, high: 106, low: 100, close: 101 },
