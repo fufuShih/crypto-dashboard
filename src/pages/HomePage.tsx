@@ -2,7 +2,7 @@ import '@pixi/layout/react';
 import '@pixi/layout';
 import { LayoutContainer } from '@pixi/layout/components';
 import React, { useRef, useEffect } from 'react';
-import { Container, Graphics, HTMLText, Sprite, State } from 'pixi.js';
+import { Container, Graphics, Text, Sprite, State } from 'pixi.js';
 import { extend, useApplication, Application } from '@pixi/react';
 import Chart from '../components/Chart';
 
@@ -12,8 +12,7 @@ extend({
     Sprite,
     State,
     Graphics,
-    Text,
-    HTMLText
+    Text
 });
 
 const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
