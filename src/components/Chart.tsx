@@ -104,11 +104,11 @@ const Chart: React.FC<ChartProps> = ({
             <pixiText
               key={i}
               text={price.toFixed(2)}
-              x={8}
-              y={y - 10}
+              x={padding - 8}
+              y={y - 7}
               style={{
                 fill: '#cccccc',
-                fontSize: 14,
+                fontSize: 13,
                 fontFamily: 'monospace',
                 align: 'right',
               }}
@@ -117,11 +117,20 @@ const Chart: React.FC<ChartProps> = ({
         })
       }
       
+      {/* X軸時間標籤 - 修改為每隔N個數據點顯示一個 */}
       {
-        Array.from({ length: data.length }).map((_, i) => {
-          const x = padding + i * (chartWidth / data.length);
-          const date = new Date(data[i].timestamp);
+        data.map((item, i) => {
+          // 計算要顯示的標籤數量 (最多顯示8個，避免擁擠)
+          const maxLabels = 8;
+          const step = Math.max(1, Math.floor(data.length / maxLabels));
+          
+          // 只顯示每隔step個數據點的標籤，或第一個和最後一個
+          if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
+          
+          const x = padding + i * (chartWidth / data.length) + (chartWidth / data.length) / 2;
+          const date = new Date(item.timestamp);
           const labelStr = `${date.getMonth() + 1}/${date.getDate()}`;
+          
           return (
             <pixiText 
               key={i} 
@@ -130,7 +139,7 @@ const Chart: React.FC<ChartProps> = ({
               y={height - padding + 5} 
               style={{
                 fill: '#cccccc',
-                fontSize: 14,
+                fontSize: 12,
                 fontFamily: 'monospace',
                 align: 'center',
               }}
