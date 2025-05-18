@@ -96,24 +96,48 @@ const Chart: React.FC<ChartProps> = ({
     <pixiContainer>
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
       {/* Y軸價格標籤 */}
-      {Array.from({ length: gridLines + 1 }).map((_, i) => {
-        const y = padding + (chartHeight / gridLines) * i;
-        const price = maxPrice - (priceRange / gridLines) * i;
-        return (
-          <pixiText
-            key={i}
-            text={price.toFixed(2)}
-            x={8}
-            y={y - 10}
-            style={{
-              fill: '#cccccc',
-              fontSize: 14,
-              fontFamily: 'monospace',
-              align: 'right',
-            }}
-          />
-        );
-      })}
+      {
+        Array.from({ length: gridLines + 1 }).map((_, i) => {
+          const y = padding + (chartHeight / gridLines) * i;
+          const price = maxPrice - (priceRange / gridLines) * i;
+          return (
+            <pixiText
+              key={i}
+              text={price.toFixed(2)}
+              x={8}
+              y={y - 10}
+              style={{
+                fill: '#cccccc',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                align: 'right',
+              }}
+            />
+          );
+        })
+      }
+      
+      {
+        Array.from({ length: data.length }).map((_, i) => {
+          const x = padding + i * (chartWidth / data.length);
+          const date = new Date(data[i].timestamp);
+          const labelStr = `${date.getMonth() + 1}/${date.getDate()}`;
+          return (
+            <pixiText 
+              key={i} 
+              text={labelStr} 
+              x={x} 
+              y={height - padding + 5} 
+              style={{
+                fill: '#cccccc',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                align: 'center',
+              }}
+            />
+          );
+        })
+      }
     </pixiContainer>
   );
 };
