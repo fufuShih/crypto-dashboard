@@ -31,19 +31,19 @@ const Chart: React.FC<ChartProps> = ({
   const maxPrice = data.length ? Math.max(...data.map(d => d.high)) : 1;
   const priceRange = maxPrice - minPrice || 1;
 
-  const drawChart = (g: PIXI.Graphics) => {
+  const drawChart = (graphic: PIXI.Graphics) => {
     if (!data.length) return;
 
-    g.clear();
+    graphic.clear();
     
     // Draw background
-    g.rect(0, 0, width, height)
+    graphic.rect(0, 0, width, height)
       .fill(0x232326);
 
     // Draw grid lines
     for (let i = 0; i <= gridLines; i++) {
       const y = padding + ((height - padding * 2) / gridLines) * i;
-      g.moveTo(padding, y)
+      graphic.moveTo(padding, y)
         .lineTo(width - padding, y)
         .stroke({ width: 1, color: 0x444444, alpha: 0.7 });
     }
@@ -52,7 +52,7 @@ const Chart: React.FC<ChartProps> = ({
     const priceScale = chartHeight / priceRange;
 
     // Draw price scale (Y axis)
-    g.moveTo(padding, padding)
+    graphic.moveTo(padding, padding)
       .lineTo(padding, height - padding)
       .lineTo(width - padding, height - padding)
       .stroke({ width: 1, color: 0xcccccc });
@@ -61,13 +61,15 @@ const Chart: React.FC<ChartProps> = ({
     data.forEach((candle, index) => {
       const x = padding + index * (chartWidth / data.length);
       const isBull = candle.close >= candle.open;
-      const color = isBull ? 0x4caf50 : 0xf44336;
+      const GREEN = 0x4caf50;
+      const RED = 0xf44336;
+      const color = isBull ? GREEN : RED;
 
       // Draw candle body
       const bodyHeight = Math.max(2, Math.abs(candle.close - candle.open) * priceScale);
       const bodyY = height - padding - (Math.max(candle.open, candle.close) - minPrice) * priceScale;
       
-      g.rect(x, bodyY, chartWidth / data.length, bodyHeight)
+      graphic.rect(x, bodyY, chartWidth / data.length, bodyHeight)
         .fill({ color, alpha: 0.9 })
         .stroke({ width: 1, color });
 
@@ -76,7 +78,7 @@ const Chart: React.FC<ChartProps> = ({
       const highY = height - padding - (candle.high - minPrice) * priceScale;
       const lowY = height - padding - (candle.low - minPrice) * priceScale;
       
-      g.moveTo(wickX, highY)
+      graphic.moveTo(wickX, highY)
         .lineTo(wickX, lowY)
         .stroke({ width: 1, color });
     });
