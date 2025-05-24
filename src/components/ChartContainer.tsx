@@ -50,7 +50,7 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
 const ChartContainer = () => {
   return (
-    <Application resizeTo={window}>
+    <Application resizeTo={document.getElementById('main-section') as HTMLElement}>
       <LayoutResizer>
           <layoutContainer
               layout={{ 

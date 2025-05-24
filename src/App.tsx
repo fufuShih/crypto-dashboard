@@ -6,7 +6,7 @@ function App() {
   return (
     <main className="flex flex-col min-h-screen bg-gray-900">
       <SiteHeader />
-      <section className="flex-1 w-full">
+      <section id="main-section" className="flex-1 w-full block">
         <HomePage />
       </section>
       <SiteFooter />
