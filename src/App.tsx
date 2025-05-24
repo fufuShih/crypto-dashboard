@@ -4,13 +4,13 @@ import { HomePage } from './pages/HomePage';
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <main className="flex flex-col min-h-screen bg-gray-900">
       <SiteHeader />
-      <main className="flex-grow">
+      <section className="flex-1 w-full">
         <HomePage />
-      </main>
+      </section>
       <SiteFooter />
-    </div>
+    </main>
   );
 }
 

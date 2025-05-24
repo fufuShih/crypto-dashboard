@@ -2,8 +2,10 @@ import ChartContainer from "../components/ChartContainer";
 
 export function HomePage() {
     return (
-        <div className="container mx-auto px-4 py-8">
-            <ChartContainer />
+        <div className="w-full h-full min-h-[calc(100vh-8rem)] py-8">
+            <div className="container mx-auto px-4">
+                <ChartContainer />
+            </div>
         </div>
     );
 }
