@@ -15,10 +15,10 @@ interface ChartProps {
   height?: number;
 }
 
-const Chart: React.FC<ChartProps> = ({ 
-  data = [], 
-  width = 800, 
-  height = 400 
+const Chart: React.FC<ChartProps> = ({
+  data = [],
+  width = 800,
+  height = 400
 }) => {
   const graphicsRef = useRef<PIXI.Graphics>(null);
 
@@ -31,11 +31,18 @@ const Chart: React.FC<ChartProps> = ({
   const maxPrice = data.length ? Math.max(...data.map(d => d.high)) : 1;
   const priceRange = maxPrice - minPrice || 1;
 
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const drawChart = (graphic: PIXI.Graphics) => {
     if (!data.length) return;
 
     graphic.clear();
-    
+
     // Draw background
     graphic.rect(0, 0, width, height)
       .fill(0x232326);
@@ -68,7 +75,7 @@ const Chart: React.FC<ChartProps> = ({
       // Draw candle body
       const bodyHeight = Math.max(2, Math.abs(candle.close - candle.open) * priceScale);
       const bodyY = height - padding - (Math.max(candle.open, candle.close) - minPrice) * priceScale;
-      
+
       graphic.rect(x, bodyY, chartWidth / data.length, bodyHeight)
         .fill({ color, alpha: 0.9 })
         .stroke({ width: 1, color });
@@ -77,7 +84,7 @@ const Chart: React.FC<ChartProps> = ({
       const wickX = x + (chartWidth / data.length) * 0.5;
       const highY = height - padding - (candle.high - minPrice) * priceScale;
       const lowY = height - padding - (candle.low - minPrice) * priceScale;
-      
+
       graphic.moveTo(wickX, highY)
         .lineTo(wickX, lowY)
         .stroke({ width: 1, color });
@@ -87,39 +94,39 @@ const Chart: React.FC<ChartProps> = ({
   return (
     <pixiContainer>
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
-      
-      {/* X軸時間標籤 - 修改為每隔N個數據點顯示一個 */}
+
+      {/* X軸時間標籤 */}
       {
         data.map((item, i) => {
-          // 計算要顯示的標籤數量 (最多顯示8個，避免擁擠)
-          const maxLabels = 8;
+          // 計算要顯示的標籤數量 (最多顯示6個，避免擁擠)
+          const maxLabels = 6;
           const step = Math.max(1, Math.floor(data.length / maxLabels));
-          
+
           // 只顯示每隔step個數據點的標籤，或第一個和最後一個
           if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
-          
+
           const x = padding + i * (chartWidth / data.length) + (chartWidth / data.length) / 2;
-          const date = new Date(item.timestamp);
-          const labelStr = `${date.getMonth() + 1}/${date.getDate()}`;
-          
+          const timeStr = formatTime(item.timestamp);
+
           return (
-            <pixiText 
-              key={i} 
-              text={labelStr} 
-              x={x} 
-              y={height - padding + 5} 
+            <pixiText
+              key={i}
+              text={timeStr}
+              x={x}
+              y={height - padding + 5}
               style={{
                 fill: '#cccccc',
-                fontSize: 12,
+                fontSize: 14,
                 fontFamily: 'monospace',
                 align: 'center',
+                fontWeight: 'bold',
               }}
             />
           );
         })
       }
 
-      {/* Y軸價格標籤 - 放在最後確保最高z-index */}
+      {/* Y軸價格標籤 */}
       {
         Array.from({ length: gridLines + 1 }).map((_, i) => {
           const y = padding + (chartHeight / gridLines) * i;
