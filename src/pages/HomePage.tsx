@@ -2,7 +2,7 @@ import ChartContainer from "../components/ChartContainer";
 
 export function HomePage() {
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
+        <div className="container mx-auto px-4 py-8">
             <ChartContainer />
         </div>
     );
