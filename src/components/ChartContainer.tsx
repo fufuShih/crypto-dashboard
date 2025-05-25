@@ -33,8 +33,6 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         };
 
         app.renderer.on("resize", handleResize);
-
-        // Initial layout
         handleResize();
 
         return () => {
@@ -58,6 +56,24 @@ const ChartContainer = () => {
     close: number;
   }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        setDimensions({ width, height: height - 100 }); // Subtract some height for padding
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, []);
 
   useEffect(() => {
     const ws = new BinanceWebSocket('btcusdt', '1m');
@@ -84,34 +100,67 @@ const ChartContainer = () => {
   }, []);
 
   return (
-    <Application resizeTo={document.getElementById('main-section') as HTMLElement}>
-      <LayoutResizer>
-          <layoutContainer
-              layout={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: '#2C2C2E',
-                width: '100%',
-                height: '100%'
-              }}
-          >
-            {isLoading ? (
-              <pixiText
-                text="Loading..."
-                style={{
-                  fill: '#cccccc',
-                  fontSize: 20,
-                  fontFamily: 'monospace',
-                  align: 'center',
-                }}
-              />
-            ) : (
-              <Chart data={chartData} />
-            )}
-          </layoutContainer>
-      </LayoutResizer>
-  </Application>
-  )
-}
+    <div ref={containerRef} className="bg-white rounded-2xl shadow-lg p-6 h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-black">Bitcoin</h1>
+          <p className="text-black opacity-60">BTC/USD</p>
+        </div>
+        <div className="text-right">
+          <p className="text-3xl font-bold text-black">$42,850.00</p>
+          <p className="text-green-500 font-medium">+2.45%</p>
+        </div>
+      </div>
 
-export default ChartContainer
+      {/* Chart Area */}
+      <div className="relative h-[calc(100%-80px)]">
+        {dimensions.width > 0 && (
+          <Application
+            width={dimensions.width}
+            height={dimensions.height}
+            backgroundColor={0xffffff}
+            antialias={true}
+          >
+            <LayoutResizer>
+              <layoutContainer
+                layout={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 0xffffff,
+                  width: '100%',
+                  height: '100%'
+                }}
+              >
+                {isLoading ? (
+                  <pixiText
+                    text="Loading..."
+                    style={{
+                      fill: '#cccccc',
+                      fontSize: 20,
+                      fontFamily: 'monospace',
+                      align: 'center',
+                    }}
+                  />
+                ) : (
+                  <Chart data={chartData} width={dimensions.width} height={dimensions.height} />
+                )}
+              </layoutContainer>
+            </LayoutResizer>
+          </Application>
+        )}
+      </div>
+
+      {/* Time Range Selector */}
+      <div className="flex space-x-2 mt-4">
+        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium">1H</button>
+        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">4H</button>
+        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1D</button>
+        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1W</button>
+        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1M</button>
+      </div>
+    </div>
+  );
+};
+
+export default ChartContainer;
