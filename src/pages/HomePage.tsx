@@ -4,19 +4,21 @@ import Search from "../components/Search";
 
 export function HomePage() {
   return (
-    <div className="max-w-7xl mx-auto p-2">
-      <div className="flex gap-6">
-        {/* Left side - Chart */}
-        <div className="flex-1">
+    <section className="w-full p-2 flex flex-col gap-2">
+      {/* First row - Chart and Search */}
+      <div className="flex gap-2">
+        <div className="flex-3">
           <ChartContainer />
         </div>
-
-        {/* Right side - Search and Portfolio */}
-        <div className="w-80 space-y-6">
+        <div className="flex-1">
           <Search />
-          <Portfolio />
         </div>
       </div>
-    </div>
+
+      {/* Second row - Portfolio */}
+      <div className="px-2">
+        <Portfolio />
+      </div>
+    </section>
   );
 }
