@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 
 interface PriceData {
@@ -21,6 +21,9 @@ const Chart: React.FC<ChartProps> = ({
   height = 400
 }) => {
   const graphicsRef = useRef<PIXI.Graphics>(null);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMouseX, setLastMouseX] = useState(0);
 
   // Add left and right padding space
   const padding = {
@@ -44,6 +47,27 @@ const Chart: React.FC<ChartProps> = ({
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   };
+
+  const handlePointerDown = useCallback((e: PIXI.FederatedPointerEvent) => {
+    setIsDragging(true);
+    setLastMouseX(e.global.x);
+  }, []);
+
+  const handlePointerMove = useCallback((e: PIXI.FederatedPointerEvent) => {
+    if (!isDragging) return;
+
+    const deltaX = e.global.x - lastMouseX;
+    setScrollOffset(prev => {
+      const newOffset = prev + deltaX;
+      const maxOffset = Math.max(0, (data.length * (chartWidth / data.length)) - chartWidth);
+      return Math.max(0, Math.min(newOffset, maxOffset));
+    });
+    setLastMouseX(e.global.x);
+  }, [isDragging, lastMouseX, data.length, chartWidth]);
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   const drawChart = (graphic: PIXI.Graphics) => {
     if (!data.length) return;
@@ -76,7 +100,11 @@ const Chart: React.FC<ChartProps> = ({
     const candleSpacing = chartWidth / data.length;
 
     data.forEach((candle, index) => {
-      const x = padding.left + index * candleSpacing + (candleSpacing - candleWidth) / 2;
+      const x = padding.left + index * candleSpacing + (candleSpacing - candleWidth) / 2 - scrollOffset;
+
+      // Only draw candles that are visible in the viewport
+      if (x + candleWidth < padding.left || x > width - padding.right) return;
+
       const isBull = candle.close >= candle.open;
       const GREEN = 0x10B981;  // Tailwind green-500
       const RED = 0xEF4444;    // Tailwind red-500
@@ -102,7 +130,13 @@ const Chart: React.FC<ChartProps> = ({
   };
 
   return (
-    <pixiContainer>
+    <pixiContainer
+      eventMode="static"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerUpOutside={handlePointerUp}
+    >
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
 
       {/* X-axis time labels */}
@@ -112,7 +146,11 @@ const Chart: React.FC<ChartProps> = ({
 
         if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
 
-        const x = padding.left + i * (chartWidth / data.length) + (chartWidth / data.length) / 2;
+        const x = padding.left + i * (chartWidth / data.length) + (chartWidth / data.length) / 2 - scrollOffset;
+
+        // Only show labels that are visible in the viewport
+        if (x < padding.left || x > width - padding.right) return null;
+
         const timeStr = formatTime(item.timestamp);
 
         return (
