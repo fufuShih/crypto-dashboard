@@ -34,8 +34,12 @@ const Chart: React.FC<ChartProps> = ({
   };
 
   const gridLines = 5;
-  const chartWidth = width - padding.left - padding.right;
+  const chartWidth = Math.max(width - padding.left - padding.right, data.length * 6 * (1 + 0.1));
   const chartHeight = height - padding.top - padding.bottom;
+
+  // Add minimum candle width constant
+  const MIN_CANDLE_WIDTH = 6;
+  const CANDLE_SPACING_RATIO = 0.05; // 5% spacing between candles
 
   const minPrice = data.length ? Math.min(...data.map(d => d.low)) : 0;
   const maxPrice = data.length ? Math.max(...data.map(d => d.high)) : 1;
@@ -96,8 +100,8 @@ const Chart: React.FC<ChartProps> = ({
       .stroke({ width: 1, color: 0xE5E7EB });
 
     // Draw candlesticks
-    const candleWidth = Math.max(1, (chartWidth / data.length) * 0.8);
     const candleSpacing = chartWidth / data.length;
+    const candleWidth = Math.max(MIN_CANDLE_WIDTH, candleSpacing * (1 - CANDLE_SPACING_RATIO));
 
     data.forEach((candle, index) => {
       const x = padding.left + index * candleSpacing + (candleSpacing - candleWidth) / 2 - scrollOffset;
@@ -136,6 +140,8 @@ const Chart: React.FC<ChartProps> = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerUpOutside={handlePointerUp}
+      width={chartWidth + padding.left + padding.right}
+      height={height}
     >
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
 
