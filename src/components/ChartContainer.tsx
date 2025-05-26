@@ -55,6 +55,8 @@ const ChartContainer = () => {
     low: number;
     close: number;
   }>>([]);
+  const [latestPrice, setLatestPrice] = useState<number>(0);
+  const [priceChange, setPriceChange] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -80,6 +82,17 @@ const ChartContainer = () => {
 
     ws.onData((data) => {
       setChartData(data);
+      if (data.length > 0) {
+        const latest = data[data.length - 1];
+        setLatestPrice(latest.close);
+
+        // Calculate price change percentage
+        if (data.length > 1) {
+          const previous = data[data.length - 2];
+          const change = ((latest.close - previous.close) / previous.close) * 100;
+          setPriceChange(change);
+        }
+      }
       setIsLoading(false);
     });
 
@@ -108,8 +121,13 @@ const ChartContainer = () => {
           <p className="text-black opacity-60">BTC/USD</p>
         </div>
         <div className="text-right">
-          <p className="text-3xl font-bold text-black">$42,850.00</p>
-          <p className="text-green-500 font-medium">+2.45%</p>
+          <p className="text-3xl font-bold text-black">
+            ${latestPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+
+          <p className={`font-medium ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+          </p>
         </div>
       </div>
 
