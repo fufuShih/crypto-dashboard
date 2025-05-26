@@ -21,7 +21,7 @@ class BinanceWebSocket {
   private async fetchHistoricalData(): Promise<KlineData[]> {
     try {
       const endTime = Date.now();
-      const startTime = endTime - (30 * 60 * 1000); // 30 minutes ago
+      const startTime = endTime - (60 * 60 * 1000); // 1 hour ago
 
       const response = await fetch(
         `https://api.binance.com/api/v3/klines?symbol=${this.symbol.toUpperCase()}&interval=${this.interval}&startTime=${startTime}&endTime=${endTime}&limit=30`
