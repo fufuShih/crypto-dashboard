@@ -1,4 +1,8 @@
-const Portfolio = () => {
+interface PortfolioProps {
+}
+
+const Portfolio = (props: PortfolioProps) => {
+
   return (
     <div className="flex space-x-6">
       {/* Portfolio Overview */}
