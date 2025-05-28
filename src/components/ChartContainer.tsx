@@ -47,6 +47,25 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     );
 };
 
+// Chart wrapper component with masking
+const MaskedChart: React.FC<{
+  data: Array<{
+    timestamp: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  }>;
+  width: number;
+  height: number;
+}> = ({ data, width, height }) => {
+  return (
+    <pixiContainer width={width} height={height}>
+      <Chart data={data} width={width} height={height} />
+    </pixiContainer>
+  );
+};
+
 const ChartContainer = () => {
   const [chartData, setChartData] = useState<Array<{
     timestamp: number;
@@ -131,8 +150,8 @@ const ChartContainer = () => {
         </div>
       </div>
 
-      {/* Chart Area */}
-      <div className="relative h-[calc(100%-80px)]">
+      {/* Chart Area with Masking */}
+      <div className="relative h-[calc(100%-80px)] overflow-hidden">
         {dimensions.width > 0 && (
           <Application
             width={dimensions.width}
@@ -161,7 +180,11 @@ const ChartContainer = () => {
                     }}
                   />
                 ) : (
-                  <Chart data={chartData} width={dimensions.width} height={dimensions.height} />
+                  <MaskedChart
+                    data={chartData}
+                    width={dimensions.width}
+                    height={dimensions.height}
+                  />
                 )}
               </layoutContainer>
             </LayoutResizer>

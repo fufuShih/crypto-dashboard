@@ -34,12 +34,15 @@ const Chart: React.FC<ChartProps> = ({
   };
 
   const gridLines = 5;
-  const chartWidth = Math.max(width - padding.left - padding.right, data.length * 6 * (1 + 0.1));
+  // Chart container uses fixed width/height, graphics can extend beyond
+  const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
-  // Add minimum candle width constant
+  // Calculate the total content width based on data length
   const MIN_CANDLE_WIDTH = 6;
-  const CANDLE_SPACING_RATIO = 0.05; // 5% spacing between candles
+  const CANDLE_SPACING_RATIO = 0.05;
+  const candleSpacing = Math.max(MIN_CANDLE_WIDTH / (1 - CANDLE_SPACING_RATIO), 8);
+  const totalContentWidth = data.length * candleSpacing;
 
   const minPrice = data.length ? Math.min(...data.map(d => d.low)) : 0;
   const maxPrice = data.length ? Math.max(...data.map(d => d.high)) : 1;
@@ -63,11 +66,11 @@ const Chart: React.FC<ChartProps> = ({
     const deltaX = e.global.x - lastMouseX;
     setScrollOffset(prev => {
       const newOffset = prev + deltaX;
-      const maxOffset = Math.max(0, (data.length * (chartWidth / data.length)) - chartWidth);
+      const maxOffset = Math.max(0, totalContentWidth - chartWidth);
       return Math.max(0, Math.min(newOffset, maxOffset));
     });
     setLastMouseX(e.global.x);
-  }, [isDragging, lastMouseX, data.length, chartWidth]);
+  }, [isDragging, lastMouseX, totalContentWidth, chartWidth]);
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
@@ -78,15 +81,15 @@ const Chart: React.FC<ChartProps> = ({
 
     graphic.clear();
 
-    // Draw background
+    // Draw background - full container size
     graphic.rect(0, 0, width, height)
       .fill(0xffffff);
 
-    // Draw grid lines
+    // Draw grid lines within chart area
     for (let i = 0; i <= gridLines; i++) {
       const y = padding.top + (chartHeight / gridLines) * i;
       graphic.moveTo(padding.left, y)
-        .lineTo(width - padding.right, y)
+        .lineTo(padding.left + chartWidth, y)
         .stroke({ width: 1, color: 0xE5E7EB, alpha: 0.7 });
     }
 
@@ -96,22 +99,21 @@ const Chart: React.FC<ChartProps> = ({
     // Draw price scale (Y axis)
     graphic.moveTo(padding.left, padding.top)
       .lineTo(padding.left, height - padding.bottom)
-      .lineTo(width - padding.right, height - padding.bottom)
+      .lineTo(padding.left + chartWidth, height - padding.bottom)
       .stroke({ width: 1, color: 0xE5E7EB });
 
-    // Draw candlesticks
-    const candleSpacing = chartWidth / data.length;
+    // Draw candlesticks directly to main graphics
     const candleWidth = Math.max(MIN_CANDLE_WIDTH, candleSpacing * (1 - CANDLE_SPACING_RATIO));
 
     data.forEach((candle, index) => {
       const x = padding.left + index * candleSpacing + (candleSpacing - candleWidth) / 2 - scrollOffset;
 
-      // Only draw candles that are visible in the viewport
-      if (x + candleWidth < padding.left || x > width - padding.right) return;
+      // Only draw candles that might be visible (with some buffer)
+      if (x + candleWidth < padding.left - 100 || x > padding.left + chartWidth + 100) return;
 
       const isBull = candle.close >= candle.open;
-      const GREEN = 0x10B981;  // Tailwind green-500
-      const RED = 0xEF4444;    // Tailwind red-500
+      const GREEN = 0x10B981;
+      const RED = 0xEF4444;
       const color = isBull ? GREEN : RED;
 
       // Draw candle body
@@ -140,40 +142,42 @@ const Chart: React.FC<ChartProps> = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerUpOutside={handlePointerUp}
-      width={chartWidth + padding.left + padding.right}
+      width={width}
       height={height}
     >
       <pixiGraphics draw={drawChart} ref={graphicsRef} />
 
-      {/* X-axis time labels */}
-      {data.map((item, i) => {
-        const maxLabels = 6;
-        const step = Math.max(1, Math.floor(data.length / maxLabels));
+      {/* X-axis time labels - masked to visible area */}
+      <pixiContainer>
+        {data.map((item, i) => {
+          const maxLabels = 6;
+          const step = Math.max(1, Math.floor(data.length / maxLabels));
 
-        if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
+          if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
 
-        const x = padding.left + i * (chartWidth / data.length) + (chartWidth / data.length) / 2 - scrollOffset;
+          const x = padding.left + i * candleSpacing + candleSpacing / 2 - scrollOffset;
 
-        // Only show labels that are visible in the viewport
-        if (x < padding.left || x > width - padding.right) return null;
+          // Only show labels that are visible in the chart area
+          if (x < padding.left || x > padding.left + chartWidth) return null;
 
-        const timeStr = formatTime(item.timestamp);
+          const timeStr = formatTime(item.timestamp);
 
-        return (
-          <pixiText
-            key={i}
-            text={timeStr}
-            x={x}
-            y={height - padding.bottom + 5}
-            style={{
-              fill: '#6B7280',  // Tailwind gray-500
-              fontSize: 12,
-              fontFamily: 'Inter, system-ui, sans-serif',
-              align: 'center',
-            }}
-          />
-        );
-      })}
+          return (
+            <pixiText
+              key={i}
+              text={timeStr}
+              x={x}
+              y={height - padding.bottom + 5}
+              style={{
+                fill: '#6B7280',
+                fontSize: 12,
+                fontFamily: 'Inter, system-ui, sans-serif',
+                align: 'center',
+              }}
+            />
+          );
+        })}
+      </pixiContainer>
 
       {/* Y-axis price labels */}
       {Array.from({ length: gridLines + 1 }).map((_, i) => {
@@ -186,7 +190,7 @@ const Chart: React.FC<ChartProps> = ({
             x={padding.left - 45}
             y={y - 7}
             style={{
-              fill: '#6B7280',  // Tailwind gray-500
+              fill: '#6B7280',
               fontSize: 12,
               fontFamily: 'Inter, system-ui, sans-serif',
               align: 'right',
