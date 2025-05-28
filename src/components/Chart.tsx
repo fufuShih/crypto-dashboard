@@ -102,36 +102,44 @@ const Chart: React.FC<ChartProps> = ({
       .lineTo(padding.left + chartWidth, height - padding.bottom)
       .stroke({ width: 1, color: 0xE5E7EB });
 
-    // Draw candlesticks directly to main graphics
+    // Draw candlesticks with clipping to chart area
     const candleWidth = Math.max(MIN_CANDLE_WIDTH, candleSpacing * (1 - CANDLE_SPACING_RATIO));
 
     data.forEach((candle, index) => {
       const x = padding.left + index * candleSpacing + (candleSpacing - candleWidth) / 2 - scrollOffset;
 
-      // Only draw candles that might be visible (with some buffer)
-      if (x + candleWidth < padding.left - 100 || x > padding.left + chartWidth + 100) return;
+      // Only draw candles that are within the chart area bounds
+      if (x + candleWidth < padding.left || x > padding.left + chartWidth) return;
 
       const isBull = candle.close >= candle.open;
       const GREEN = 0x10B981;
       const RED = 0xEF4444;
       const color = isBull ? GREEN : RED;
 
-      // Draw candle body
+      // Clip candle body to chart area
       const bodyHeight = Math.max(2, Math.abs(candle.close - candle.open) * priceScale);
       const bodyY = height - padding.bottom - (Math.max(candle.open, candle.close) - minPrice) * priceScale;
 
-      graphic.rect(x, bodyY, candleWidth, bodyHeight)
-        .fill({ color, alpha: 0.9 })
-        .stroke({ width: 1, color });
+      // Ensure candle body stays within chart bounds
+      const clippedX = Math.max(padding.left, Math.min(x, padding.left + chartWidth - candleWidth));
+      const clippedWidth = Math.min(candleWidth, padding.left + chartWidth - clippedX);
 
-      // Draw wicks
+      if (clippedWidth > 0) {
+        graphic.rect(clippedX, bodyY, clippedWidth, bodyHeight)
+          .fill({ color, alpha: 0.9 })
+          .stroke({ width: 1, color });
+      }
+
+      // Draw wicks only if within chart area
       const wickX = x + candleWidth / 2;
-      const highY = height - padding.bottom - (candle.high - minPrice) * priceScale;
-      const lowY = height - padding.bottom - (candle.low - minPrice) * priceScale;
+      if (wickX >= padding.left && wickX <= padding.left + chartWidth) {
+        const highY = height - padding.bottom - (candle.high - minPrice) * priceScale;
+        const lowY = height - padding.bottom - (candle.low - minPrice) * priceScale;
 
-      graphic.moveTo(wickX, highY)
-        .lineTo(wickX, lowY)
-        .stroke({ width: 1, color });
+        graphic.moveTo(wickX, highY)
+          .lineTo(wickX, lowY)
+          .stroke({ width: 1, color });
+      }
     });
   };
 
@@ -145,47 +153,52 @@ const Chart: React.FC<ChartProps> = ({
       width={width}
       height={height}
     >
-      <pixiGraphics draw={drawChart} ref={graphicsRef} />
-
-      {/* X-axis time labels - masked to visible area */}
-      <pixiContainer>
-        {data.map((item, i) => {
-          const maxLabels = 6;
-          const step = Math.max(1, Math.floor(data.length / maxLabels));
-
-          if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
-
-          const x = padding.left + i * candleSpacing + candleSpacing / 2 - scrollOffset;
-
-          // Only show labels that are visible in the chart area
-          if (x < padding.left || x > padding.left + chartWidth) return null;
-
-          const timeStr = formatTime(item.timestamp);
-
-          return (
-            <pixiText
-              key={i}
-              text={timeStr}
-              x={x}
-              y={height - padding.bottom + 5}
-              style={{
-                fill: '#6B7280',
-                fontSize: 12,
-                fontFamily: 'Inter, system-ui, sans-serif',
-                align: 'center',
-              }}
-            />
-          );
-        })}
+      {/* Chart content container - this will be masked/clipped */}
+      <pixiContainer
+        width={width}
+        height={height}
+        label='chart'
+      >
+        <pixiGraphics draw={drawChart} ref={graphicsRef} label='candles' />
       </pixiContainer>
 
-      {/* Y-axis price labels */}
+      {/* X-axis time labels - outside chart container to avoid clipping */}
+      {data.map((item, i) => {
+        const maxLabels = 6;
+        const step = Math.max(1, Math.floor(data.length / maxLabels));
+
+        if (i % step !== 0 && i !== 0 && i !== data.length - 1) return null;
+
+        const x = padding.left + i * candleSpacing + candleSpacing / 2 - scrollOffset;
+
+        // Only show labels that are visible in the chart area
+        if (x < padding.left || x > padding.left + chartWidth) return null;
+
+        const timeStr = formatTime(item.timestamp);
+
+        return (
+          <pixiText
+            key={`time-${i}`}
+            text={timeStr}
+            x={x}
+            y={height - padding.bottom + 5}
+            style={{
+              fill: '#6B7280',
+              fontSize: 12,
+              fontFamily: 'Inter, system-ui, sans-serif',
+              align: 'center',
+            }}
+          />
+        );
+      })}
+
+      {/* Y-axis price labels - outside chart container to avoid clipping */}
       {Array.from({ length: gridLines + 1 }).map((_, i) => {
         const y = padding.top + (chartHeight / gridLines) * i;
         const price = maxPrice - (priceRange / gridLines) * i;
         return (
           <pixiText
-            key={i}
+            key={`price-${i}`}
             text={price.toFixed(2)}
             x={padding.left - 45}
             y={y - 7}
