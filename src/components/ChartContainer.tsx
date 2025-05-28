@@ -1,49 +1,15 @@
-import '@pixi/layout/react';
-import '@pixi/layout';
-import { LayoutContainer } from '@pixi/layout/components';
 import React, { useRef, useEffect, useState } from 'react';
-import { Container, Graphics, Text, Sprite, State } from 'pixi.js';
+import { Container, Graphics, Text, Sprite } from 'pixi.js';
 import { extend, useApplication, Application } from '@pixi/react';
 import Chart from '../components/Chart';
 import BinanceWebSocket from '../services/BinanceWebSocket';
 
 extend({
     Container,
-    LayoutContainer,
     Sprite,
-    State,
     Graphics,
     Text
 });
-
-const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const layoutRef = useRef<Container>(null);
-    const { app } = useApplication();
-
-    useEffect(() => {
-        if (!app?.renderer) return;
-
-        const handleResize = () => {
-            if (layoutRef.current) {
-                layoutRef.current.width = app.screen.width;
-                layoutRef.current.height = app.screen.height;
-            }
-        };
-
-        app.renderer.on("resize", handleResize);
-        handleResize();
-
-        return () => {
-            app.renderer.off("resize", handleResize);
-        };
-    }, [app]);
-
-    return (
-        <pixiContainer ref={layoutRef} layout={{}} label='LayoutResizer'>
-            {children}
-        </pixiContainer>
-    );
-};
 
 const ChartContainer = () => {
   const [chartData, setChartData] = useState<Array<{
@@ -138,10 +104,13 @@ const ChartContainer = () => {
             backgroundColor={0xffffff}
             antialias={true}
           >
-            <LayoutResizer>
+            <pixiContainer width={dimensions.width} height={dimensions.height}>
               {isLoading ? (
                 <pixiText
                   text="Loading..."
+                  x={dimensions.width / 2}
+                  y={dimensions.height / 2}
+                  anchor={0.5}
                   style={{
                     fill: '#cccccc',
                     fontSize: 20,
@@ -156,7 +125,7 @@ const ChartContainer = () => {
                   height={dimensions.height}
                 />
               )}
-            </LayoutResizer>
+            </pixiContainer>
           </Application>
         )}
       </div>
