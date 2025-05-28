@@ -25,10 +25,8 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
         const handleResize = () => {
             if (layoutRef.current) {
-                layoutRef.current.layout = {
-                    width: app.screen.width,
-                    height: app.screen.height,
-                };
+                layoutRef.current.width = app.screen.width;
+                layoutRef.current.height = app.screen.height;
             }
         };
 
@@ -41,7 +39,7 @@ const LayoutResizer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }, [app]);
 
     return (
-        <pixiContainer ref={layoutRef} layout={{}}>
+        <pixiContainer ref={layoutRef} layout={{}} label='LayoutResizer'>
             {children}
         </pixiContainer>
     );
@@ -141,45 +139,26 @@ const ChartContainer = () => {
             antialias={true}
           >
             <LayoutResizer>
-              <layoutContainer
-                layout={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: 0xffffff,
-                  width: '100%',
-                  height: '100%'
-                }}
-              >
-                {isLoading ? (
-                  <pixiText
-                    text="Loading..."
-                    style={{
-                      fill: '#cccccc',
-                      fontSize: 20,
-                      fontFamily: 'monospace',
-                      align: 'center',
-                    }}
-                  />
-                ) : (
-                  <Chart
-                    data={chartData}
-                    width={dimensions.width}
-                    height={dimensions.height}
-                  />
-                )}
-              </layoutContainer>
+              {isLoading ? (
+                <pixiText
+                  text="Loading..."
+                  style={{
+                    fill: '#cccccc',
+                    fontSize: 20,
+                    fontFamily: 'monospace',
+                    align: 'center',
+                  }}
+                />
+              ) : (
+                <Chart
+                  data={chartData}
+                  width={dimensions.width}
+                  height={dimensions.height}
+                />
+              )}
             </LayoutResizer>
           </Application>
         )}
-      </div>
-
-      {/* Time Range Selector */}
-      <div className="flex space-x-2 mt-4">
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium">1H</button>
-        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">4H</button>
-        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1D</button>
-        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1W</button>
-        <button className="px-4 py-2 bg-gray-100 text-black rounded-lg">1M</button>
       </div>
     </div>
   );
